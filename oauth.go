@@ -56,6 +56,9 @@ func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, provide
 
 	for _, config := range providers {
 		providerName := string(config.Provider)
+		if providerName == "" {
+			panic("no provider name")
+		}
 
 		r.HandleFunc("/"+providerName, func(w http.ResponseWriter, r *http.Request) {
 			state := generateRandomString(16)
