@@ -46,7 +46,7 @@ const (
 
 func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, providers ...*OAuthProviderConfig) http.Handler {
 	if len(providers) == 0 {
-		return nil
+		panic("no providers")
 	}
 
 	mu := new(sync.RWMutex)
