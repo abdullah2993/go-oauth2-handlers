@@ -49,6 +49,7 @@ func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderCon
 				LastName:  rawInfo.LastName,
 				Avatar:    rawInfo.Picture.Data.URL,
 				Email:     rawInfo.Email,
+				Name:      rawInfo.Name,
 				Provider:  ProviderFacebook,
 			}, nil
 		},
@@ -90,6 +91,7 @@ func GoogleProivderConfig(appId, appSecret, callback string) *OAuthProviderConfi
 				LastName:  rawInfo.FamilyName,
 				Avatar:    rawInfo.Picture,
 				Email:     rawInfo.Email,
+				Name:      rawInfo.Name,
 				Provider:  ProviderGoogle,
 			}, nil
 		},

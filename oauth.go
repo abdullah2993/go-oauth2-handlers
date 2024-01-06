@@ -14,6 +14,7 @@ import (
 
 type OAuthUser struct {
 	ID        string
+	Name      string
 	FirstName string
 	LastName  string
 	Email     string
