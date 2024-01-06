@@ -11,6 +11,7 @@ import (
 
 func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderConfig {
 	return &OAuthProviderConfig{
+		Provider:     ProviderFacebook,
 		InfoEndpoint: "https://graph.facebook.com/me?fields=email,first_name,last_name,link,about,id,name,picture,location&access_token=%s",
 		Config: &oauth2.Config{
 			ClientID:     appId,
@@ -56,6 +57,7 @@ func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderCon
 
 func GoogleProivderConfig(appId, appSecret, callback string) *OAuthProviderConfig {
 	return &OAuthProviderConfig{
+		Provider:     ProviderGoogle,
 		InfoEndpoint: "https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s",
 		Config: &oauth2.Config{
 			ClientID:     appId,
