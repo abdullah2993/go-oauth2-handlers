@@ -12,7 +12,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type OAuthUser struct {
+type User struct {
 	ID        string
 	Name      string
 	FirstName string
@@ -29,23 +29,44 @@ type oauthState struct {
 	provider     string
 }
 
-type OAuthProviderConfig struct {
+type ProviderConfig struct {
 	Provider ProviderType
 	*oauth2.Config
 	InfoEndpoint string
-	Unmarshal    func(r io.Reader) (*OAuthUser, error)
+	Unmarshal    func(r io.Reader) (*User, error)
 }
-
-type OAuthLoginHandler func(w http.ResponseWriter, user *OAuthUser)
-
-type OAuthErrorHandler func(w http.ResponseWriter, err error)
 
 const (
 	ProviderFacebook ProviderType = "facebook"
 	ProviderGoogle   ProviderType = "google"
 )
 
-func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, providers ...*OAuthProviderConfig) http.Handler {
+type contextKey int
+
+const (
+	userContextKey contextKey = iota
+	errorContextKey
+)
+
+func newUserContext(ctx context.Context, u *User) context.Context {
+	return context.WithValue(ctx, userContextKey, u)
+}
+
+func FromUserContext(ctx context.Context) (*User, bool) {
+	u, ok := ctx.Value(userContextKey).(*User)
+	return u, ok
+}
+
+func newErrorContext(ctx context.Context, u error) context.Context {
+	return context.WithValue(ctx, errorContextKey, u)
+}
+
+func FromErrorContext(ctx context.Context) (error, bool) {
+	u, ok := ctx.Value(errorContextKey).(error)
+	return u, ok
+}
+
+func New(loginHandler http.Handler, errorHandler http.Handler, providers ...*ProviderConfig) http.Handler {
 	if len(providers) == 0 {
 		panic("no providers")
 	}
@@ -79,7 +100,7 @@ func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, provide
 			oauthState, ok := oauthStates[state]
 			mu.RUnlock()
 			if !ok || oauthState.provider != providerName {
-				errorHandler(w, fmt.Errorf("invalid state: %s", state))
+				errorHandler.ServeHTTP(w, r.WithContext(newErrorContext(r.Context(), fmt.Errorf("invalid state: %s", state))))
 				return
 			}
 			mu.Lock()
@@ -88,7 +109,7 @@ func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, provide
 
 			token, err := config.Exchange(context.Background(), code)
 			if err != nil {
-				errorHandler(w, err)
+				errorHandler.ServeHTTP(w, r.WithContext(newErrorContext(r.Context(), err)))
 				return
 			}
 
@@ -97,7 +118,7 @@ func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, provide
 
 			userInfoResp, err := client.Get(fmt.Sprintf(config.InfoEndpoint, token.AccessToken))
 			if err != nil {
-				errorHandler(w, err)
+				errorHandler.ServeHTTP(w, r.WithContext(newErrorContext(r.Context(), err)))
 				return
 			}
 
@@ -105,10 +126,10 @@ func New(loginHandler OAuthLoginHandler, errorHandler OAuthErrorHandler, provide
 
 			user, err := config.Unmarshal(userInfoResp.Body)
 			if err != nil {
-				errorHandler(w, err)
+				errorHandler.ServeHTTP(w, r.WithContext(newErrorContext(r.Context(), err)))
 				return
 			}
-			loginHandler(w, user)
+			loginHandler.ServeHTTP(w, r.WithContext(newUserContext(r.Context(), user)))
 		})
 	}
 	return r

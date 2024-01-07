@@ -9,8 +9,8 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderConfig {
-	return &OAuthProviderConfig{
+func FacebookProviderConfig(appId, appSecret, callback string) *ProviderConfig {
+	return &ProviderConfig{
 		Provider:     ProviderFacebook,
 		InfoEndpoint: "https://graph.facebook.com/me?fields=email,first_name,last_name,link,about,id,name,picture,location&access_token=%s",
 		Config: &oauth2.Config{
@@ -20,7 +20,7 @@ func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderCon
 			RedirectURL:  callback,
 			Scopes:       []string{"email"},
 		},
-		Unmarshal: func(r io.Reader) (*OAuthUser, error) {
+		Unmarshal: func(r io.Reader) (*User, error) {
 
 			rawInfo := struct {
 				ID        string `json:"id"`
@@ -43,7 +43,7 @@ func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderCon
 				return nil, err
 			}
 
-			return &OAuthUser{
+			return &User{
 				ID:        rawInfo.ID,
 				FirstName: rawInfo.FirstName,
 				LastName:  rawInfo.LastName,
@@ -56,8 +56,8 @@ func FacebookProviderConfig(appId, appSecret, callback string) *OAuthProviderCon
 	}
 }
 
-func GoogleProivderConfig(appId, appSecret, callback string) *OAuthProviderConfig {
-	return &OAuthProviderConfig{
+func GoogleProivderConfig(appId, appSecret, callback string) *ProviderConfig {
+	return &ProviderConfig{
 		Provider:     ProviderGoogle,
 		InfoEndpoint: "https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s",
 		Config: &oauth2.Config{
@@ -67,7 +67,7 @@ func GoogleProivderConfig(appId, appSecret, callback string) *OAuthProviderConfi
 			RedirectURL:  callback,
 			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 		},
-		Unmarshal: func(r io.Reader) (*OAuthUser, error) {
+		Unmarshal: func(r io.Reader) (*User, error) {
 
 			rawInfo := struct {
 				ID            string `json:"id"`
@@ -85,7 +85,7 @@ func GoogleProivderConfig(appId, appSecret, callback string) *OAuthProviderConfi
 				return nil, err
 			}
 
-			return &OAuthUser{
+			return &User{
 				ID:        rawInfo.ID,
 				FirstName: rawInfo.GivenName,
 				LastName:  rawInfo.FamilyName,
